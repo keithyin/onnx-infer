@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cassert>
 #include <string>
+#include <chrono>
 
 int main()
 {
@@ -59,51 +60,110 @@ int main()
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(
         OrtArenaAllocator, OrtMemTypeDefault);
 
-    // 创建输入 tensor
-    Ort::Value feature_tensor = Ort::Value::CreateTensor<float>(
-        memory_info,
-        feature_origin.data(),
-        feature_origin.size(),
-        feature_shape,
-        3);
+    // warm up
 
-    Ort::Value length_tensor = Ort::Value::CreateTensor<int64_t>(
-        memory_info,
-        length_origin.data(),
-        length_origin.size(),
-        length_shape,
-        1);
+    for (int i = 0; i < 10; i++)
+    {
 
-    assert(feature_tensor.IsTensor());
-    assert(length_tensor.IsTensor());
+        // 创建输入 tensor
+        Ort::Value feature_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            feature_origin.data(),
+            feature_origin.size(),
+            feature_shape,
+            3);
 
-    // 获取输入输出名称
-    Ort::AllocatorWithDefaultOptions allocator;
-    auto input_name_0 = session.GetInputNameAllocated(0, allocator);
-    auto input_name_1 = session.GetInputNameAllocated(1, allocator);
-    auto output_name_0 = session.GetOutputNameAllocated(0, allocator);
-    
-    std::cout<< std::string(input_name_0.get()) << std::endl;
-    std::cout<< std::string(input_name_1.get()) << std::endl;
-    std::cout<< std::string(output_name_0.get()) << std::endl;
+        Ort::Value length_tensor = Ort::Value::CreateTensor<int64_t>(
+            memory_info,
+            length_origin.data(),
+            length_origin.size(),
+            length_shape,
+            1);
 
-    // 运行推理
-    std::array<const char *, 2> input_names = {input_name_0.get(), input_name_1.get()};
-    std::array<const char *, 1> output_names = {output_name_0.get()};
+        assert(feature_tensor.IsTensor());
+        assert(length_tensor.IsTensor());
 
-    auto output_tensors = session.Run(
-        Ort::RunOptions{nullptr},
-        input_names.data(),
-        std::array<Ort::Value, 2>{std::move(feature_tensor), std::move(length_tensor)}.data(),
-        input_names.size(),
-        output_names.data(),
-        output_names.size());
+        // 获取输入输出名称
+        Ort::AllocatorWithDefaultOptions allocator;
+        auto input_name_0 = session.GetInputNameAllocated(0, allocator);
+        auto input_name_1 = session.GetInputNameAllocated(1, allocator);
+        auto output_name_0 = session.GetOutputNameAllocated(0, allocator);
 
-    // 访问输出数据
-    assert(output_tensors.size() == 1 && output_tensors[0].IsTensor());
-    float *output_data = output_tensors[0].GetTensorMutableData<float>();
+        // std::cout << std::string(input_name_0.get()) << std::endl;
+        // std::cout << std::string(input_name_1.get()) << std::endl;
+        // std::cout << std::string(output_name_0.get()) << std::endl;
 
-    std::cout << "Output[0]: " << output_data[0] << std::endl;
+        // 运行推理
+        std::array<const char *, 2> input_names = {input_name_0.get(), input_name_1.get()};
+        std::array<const char *, 1> output_names = {output_name_0.get()};
 
+        auto output_tensors = session.Run(
+            Ort::RunOptions{nullptr},
+            input_names.data(),
+            std::array<Ort::Value, 2>{std::move(feature_tensor), std::move(length_tensor)}.data(),
+            input_names.size(),
+            output_names.data(),
+            output_names.size());
+
+        // 访问输出数据
+        assert(output_tensors.size() == 1 && output_tensors[0].IsTensor());
+        float *output_data = output_tensors[0].GetTensorMutableData<float>();
+        // result += output_data[0];
+    }
+
+    float result = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < 1000; i++)
+    {
+
+        // 创建输入 tensor
+        Ort::Value feature_tensor = Ort::Value::CreateTensor<float>(
+            memory_info,
+            feature_origin.data(),
+            feature_origin.size(),
+            feature_shape,
+            3);
+
+        Ort::Value length_tensor = Ort::Value::CreateTensor<int64_t>(
+            memory_info,
+            length_origin.data(),
+            length_origin.size(),
+            length_shape,
+            1);
+
+        assert(feature_tensor.IsTensor());
+        assert(length_tensor.IsTensor());
+
+        // 获取输入输出名称
+        Ort::AllocatorWithDefaultOptions allocator;
+        auto input_name_0 = session.GetInputNameAllocated(0, allocator);
+        auto input_name_1 = session.GetInputNameAllocated(1, allocator);
+        auto output_name_0 = session.GetOutputNameAllocated(0, allocator);
+
+        // std::cout << std::string(input_name_0.get()) << std::endl;
+        // std::cout << std::string(input_name_1.get()) << std::endl;
+        // std::cout << std::string(output_name_0.get()) << std::endl;
+
+        // 运行推理
+        std::array<const char *, 2> input_names = {input_name_0.get(), input_name_1.get()};
+        std::array<const char *, 1> output_names = {output_name_0.get()};
+
+        auto output_tensors = session.Run(
+            Ort::RunOptions{nullptr},
+            input_names.data(),
+            std::array<Ort::Value, 2>{std::move(feature_tensor), std::move(length_tensor)}.data(),
+            input_names.size(),
+            output_names.data(),
+            output_names.size());
+
+        // 访问输出数据
+        assert(output_tensors.size() == 1 && output_tensors[0].IsTensor());
+        float *output_data = output_tensors[0].GetTensorMutableData<float>();
+        result += output_data[0];
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "single_thread_infer: tot_sum: " << result << " elapsed: " << elapsed.count() << std::endl;
     return 0;
 }
