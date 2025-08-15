@@ -33,14 +33,14 @@ include_directories("${ONNXRUNTIME_ROOTDIR}/include"                           #
                     "${ONNXRUNTIME_ROOTDIR}/include/onnxruntime"               # Linux local install to /usr/local
                     "${ONNXRUNTIME_ROOTDIR}/include/onnxruntime/core/session") # Windows local install
 
+include_directories("/usr/local/cuda-12.2/include")
+
 link_directories("${ONNXRUNTIME_ROOTDIR}/build/Linux/RelWithDebInfo")
+link_directories("/usr/local/cuda-12.2/targets/x86_64-linux/lib")
 
 
 if(onnxruntime_USE_CUDA)
   add_definitions(-DUSE_CUDA)
-  find_package(CUDA REQUIRED)
-  include_directories(${CUDA_INCLUDE_DIRS})
-  list(APPEND EXTRA_LIBS ${CUDA_LIBRARIES})
 endif()
 if(onnxruntime_USE_TENSORRT)
   add_definitions(-DUSE_TENSORRT)
@@ -65,4 +65,9 @@ endfunction()
 # some examples require a Windows build environment
 
 ADD_EXECUTABLE(onnx-infer main.cpp)
-target_link_libraries(onnx-infer onnxruntime)
+target_link_libraries(
+    onnx-infer 
+    onnxruntime
+    ${CUDA_LIBRARIES}
+    cudart
+)
