@@ -68,6 +68,5 @@ ADD_EXECUTABLE(onnx-infer main.cpp)
 target_link_libraries(
     onnx-infer 
     onnxruntime
-    ${CUDA_LIBRARIES}
     cudart
 )
