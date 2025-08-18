@@ -127,12 +127,12 @@ void thread_worker_v2(Ort::Env &env, int tot_iterations)
 
     Ort::SessionOptions session_options;
     session_options.SetLogSeverityLevel(1);
-    session_options.DisableCpuMemArena();
-    session_options.SetExecutionMode(ORT_SEQUENTIAL);
+    // session_options.DisableCpuMemArena();
+    // session_options.SetExecutionMode(ORT_SEQUENTIAL);
     session_options.DisableCpuMemArena();
     session_options.SetIntraOpNumThreads(1);
     session_options.SetInterOpNumThreads(1);
-    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
     // 配置 CUDA Provider
     // OrtCUDAProviderOptionsV2 cuda_options;
